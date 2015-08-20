@@ -72,6 +72,13 @@
  */
 - (void)parser:(AXHTMLParser *)parser foundCharacters:(NSString *)string;
 
+/** Called when a parse warning occured.
+ 
+ @param parser The parser
+ @param message The warning message
+ */
+- (void)parser:(AXHTMLParser *)parser parseWarningOccurred:(NSString *)message;
+
 /** Called when a parse error occured.
  
  After this method is called, the parser continues.

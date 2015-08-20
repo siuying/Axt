@@ -65,6 +65,7 @@ typedef struct {
     BOOL foundCharacters;
     BOOL endElement;
     BOOL errorOccurred;
+    BOOL warningOccurred;
 } AXHTMLParserDelegateImplementation;
 
 @interface AXHTMLParser ()
@@ -113,6 +114,7 @@ typedef struct {
         _delegateImplementation.startElement = [_delegate respondsToSelector:@selector(parser:didStartElement:attributes:)];
         _delegateImplementation.foundCharacters = [_delegate respondsToSelector:@selector(parser:foundCharacters:)];
         _delegateImplementation.endElement = [_delegate respondsToSelector:@selector(parser:didEndElement:)];
+        _delegateImplementation.warningOccurred = [_delegate respondsToSelector:@selector(parser:parseWarningOccurred:)];
         _delegateImplementation.errorOccurred = [_delegate respondsToSelector:@selector(parser:parseErrorOccurred:)];
     }
 }
@@ -245,8 +247,11 @@ void warning(void *user_data, const char *msg, ...) {
     NSString *formatString = [NSString stringWithUTF8String:msg];
     NSString *warning = [[NSString alloc] initWithFormat:formatString arguments:args];
     va_end(args);
-    
-    NSLog(@"[Warning] %@", warning);
+
+    AXHTMLParser *parser = (__bridge AXHTMLParser *)user_data;
+    if (parser.delegateImplementation.warningOccurred) {
+        [parser.delegate parser:parser parseWarningOccurred:warning];
+    }
 }
 
 void error(void *user_data, const char *msg, ...) {
@@ -257,9 +262,7 @@ void error(void *user_data, const char *msg, ...) {
     NSString *formatString = [NSString stringWithUTF8String:msg];
     NSString *errorDescription = [[NSString alloc] initWithFormat:formatString arguments:args];
     va_end(args);
-    
-    NSLog(@"[Error] %@", errorDescription);
-    
+
     NSMutableDictionary *userInfo = [@{} mutableCopy];
     if (errorDescription) {
         userInfo[NSLocalizedDescriptionKey] = errorDescription;
